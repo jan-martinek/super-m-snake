@@ -12,7 +12,6 @@ const initial = {
     controls: {
       left: 37, // <--
       right: 39, // -->,
-      touchZone: 'top_left'
     },
   },
   {
@@ -22,7 +21,6 @@ const initial = {
     controls: {
       left: 81, // Q
       right: 87, // W,
-      touchZone: 'top_right'
     },
   },
   {
@@ -32,7 +30,6 @@ const initial = {
     controls: {
       left: 79, // O
       right: 80, // P,
-      touchZone: 'bottom_right'
     },
   },
   {
@@ -42,23 +39,16 @@ const initial = {
     controls: {
       left: 86, // V
       right: 66, // B,
-      touchZone: 'bottom_left'
     },
   }]
 }
 
 let mode = 'menu';
-let controlMode = 'ontouchstart' in document.documentElement
-  ? 'touch'
-  : 'keyboard';
 let snakes = [];
 let specials = [];
 let hits = [];
 let setup;
 let menu = {};
-let touchZones;
-let touchButtonSize = 75;
-
 
 
 const sketch = function(p) {
@@ -66,14 +56,12 @@ const sketch = function(p) {
   p.setup = function() {
     p.createCanvas(window.innerWidth, window.innerHeight);
     setup = initial;
-    touchZones = getTouchZones(touchButtonSize, p.width, p.height);
     setupMenu(p);
   }
 
   p.draw = function() {
     p.background(50);
     if (mode === 'game') {
-      debugTouchZones(touchZones, p);
       p.stroke(255);
       p.noFill();
       p.strokeWeight(3);
@@ -145,80 +133,14 @@ const hideMenu = () => menu.items.forEach(item => item.hide());
 
 function pollGameControls(p) {
   setup.players.forEach((player, index) => {
-    if (controlMode === 'keyboard') {
-      if (p.keyIsDown(player.controls.left)) snakes[index].steer(-1);
-      if (p.keyIsDown(player.controls.right)) snakes[index].steer(1);
-    } else if (controlMode === 'touch') {
-      p.touches.forEach((touch) => {
-        const zone = touchZones[player.controls.zone];
-        if (zoneTouched(touch, zone, 'left')) snakes[index].steer(-1);
-        if (zoneTouched(touch, zone, 'right')) snakes[index].steer(1);
-      });
-    }
+    if (p.keyIsDown(player.controls.left)) snakes[index].steer(-1);
+    if (p.keyIsDown(player.controls.right)) snakes[index].steer(1);
   });
 
   if (p.keyIsDown(32)) startGame(p);
 }
 
-const zoneTouched = (touch, zone, dir) => touch.x > zone[dir].x1 &&
-  touch.x < zone[dir].x2 && touch.y > zone[dir].y1 && touch.y < zone[dir].y2;
-
 const game = new p5(sketch);
-
-function debugTouchZones(touchZones, p) {
-  p.push();
-  p.noFill();
-
-  Object.keys(touchZones).forEach((key) => {
-    const zone = touchZones[key];
-    p.stroke("red");
-    p.quad(zone.left.x1, zone.left.y1,
-      zone.left.x1, zone.left.y2,
-      zone.left.x2, zone.left.y2,
-      zone.left.x2, zone.left.y1);
-    p.stroke("green");
-    p.quad(zone.right.x1, zone.right.y1,
-      zone.right.x1, zone.right.y2,
-      zone.right.x2, zone.right.y2,
-      zone.right.x2, zone.right.y1);
-  });
-
-  p.pop();
-}
-
-function getTouchZones(buttonSize, width, height) {
-  const s = buttonSize;
-
-  const zones = [{
-    pos: 'top_left',
-    left:  { x1: s * 0.8, y1: 0 },
-    right: { x1: 0, y1: s * 0.8 }
-  },
-  {
-    pos: 'top_right',
-    left:  { x1: width - s, y1: s * 0.8 },
-    right: { x1: width - s * 1.8, y1: 0 }
-  },
-  {
-    pos: 'bottom_right',
-    left:  { x1: width - s * 1.8, y1: height - s },
-    right: { x1: width - s, y1: height - s * 1.8 }
-  },
-  {
-    pos: 'bottom_left',
-    left:  { x1: 0, y1: height - s * 1.8 },
-    right: { x1: s * 0.8, y1: height - s }
-  }];
-
-  return zones.reduce((acc, zone) => {
-    zone.left.x2 = zone.left.x1 + s;
-    zone.left.y2 = zone.left.y1 + s;
-    zone.right.x2 = zone.right.x1 + s;
-    zone.right.y2 = zone.right.y1 + s;
-    acc[zone.pos] = zone;
-    return acc;
-  }, {});
-}
 
 function startGame(p) {
   snakes = initial.players
@@ -328,10 +250,4 @@ const Snake = function(color, p) {
     p.ellipse(this.nodes[0].x, this.nodes[0].y, this.nodes[this.nodes.length-1].x)
     p.pop();
   }
-}
-
-
-
-document.ontouchmove = function(event){
-  event.preventDefault();
 }
