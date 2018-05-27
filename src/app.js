@@ -1,4 +1,5 @@
 const P5 = require('p5');
+require('p5/lib/addons/p5.dom');
 const detectCollision = require('./detectCollision');
 
 const spawnPadding = 100;
@@ -11,6 +12,7 @@ const initial = {
     controls: {
       left: 37, // <--
       right: 39, // -->,
+      special: 38, // ^
     },
   },
   {
@@ -19,7 +21,8 @@ const initial = {
     color: 'purple',
     controls: {
       left: 81, // Q
-      right: 87, // W,
+      right: 69, // E
+      special: 87, // W,
     },
   },
   {
@@ -27,8 +30,9 @@ const initial = {
     active: true,
     color: 'pink',
     controls: {
-      left: 79, // O
+      left: 73, // I
       right: 80, // P,
+      special: 79, // O
     },
   },
   {
@@ -37,24 +41,29 @@ const initial = {
     color: 'orange',
     controls: {
       left: 86, // V
-      right: 66, // B,
+      right: 78, // N
+      special: 66, // B,
     },
-  }]
-}
+  }],
+};
 
+const specials = [];
 const hits = [];
 const menu = {};
 let mode = 'menu';
 let snakes = [];
 let setup;
+let p5instance;
 
 
 function sketch(p) {
+  p5instance = p;
+
   p.setup = () => {
     p.createCanvas(window.innerWidth, window.innerHeight);
     setup = initial;
     setupMenu(p);
-  }
+  };
 
   p.draw = () => {
     p.background(50);
@@ -62,12 +71,14 @@ function sketch(p) {
       p.stroke(255);
       p.noFill();
       p.strokeWeight(3);
-      p.rect(padding, padding, p.width - padding * 2, p.height - padding * 2, padding);
+      p.rect(padding, padding, p.width - (padding * 2), p.height - (padding * 2), padding);
 
       pollGameControls(p);
       snakes.forEach(snake => snake.move());
       snakes.forEach(snake => snake.checkHit());
       snakes.forEach(snake => snake.render());
+
+      specials.forEach(special => special.render());
 
       p.fill(255);
       hits.forEach(hit => p.ellipse(hit.x, hit.y, 100));
@@ -132,6 +143,7 @@ function pollGameControls(p) {
   setup.players.forEach((player, index) => {
     if (p.keyIsDown(player.controls.left)) snakes[index].steer(-1);
     if (p.keyIsDown(player.controls.right)) snakes[index].steer(1);
+    if (p.keyIsDown(player.controls.special)) snakes[index].triggerSpecial();
   });
 
   if (p.keyIsDown(32)) startGame(p);
@@ -155,12 +167,38 @@ function getRandomBoardPixel(p) {
   );
 }
 
+function Special(p, snake, nodeLists, updateFn, params) {
+  this.owner = snake;
+  this.nodeLists = nodeLists;
+  this.updateFn = updateFn;
+  this.params = params;
+
+  this.render = () => this.nodeLists.forEach(nodes => renderNodes(p, this.owner.color, nodes));
+
+  this.doesCollide = head => this.nodeLists.reduce((hit, nodes) => hit || detectSnakesCollision(nodes, head), false);
+}
+
+const specialFns = {
+  createCurb: (snake, p) => {
+    const pos = snake.getPos();
+    const dir = snake.dir.copy().rotate(p.HALF_PI);
+
+    const nodeLists = [
+      [P5.Vector.add(pos, dir.setMag(4)), P5.Vector.add(pos, dir.setMag(15))],
+      [P5.Vector.add(pos, dir.setMag(-4)), P5.Vector.add(pos, dir.setMag(15))],
+    ];
+
+    specials.push(new Special(p, snake, nodeLists));
+  },
+};
+
 function Snake(color, p) {
   this.dir = P5.Vector.fromAngle(p.random(0, p.TAU)).setMag(2);
   this.steered = true;
   this.nodes = [getRandomBoardPixel(p)];
   this.color = color;
   this.hit = false;
+  this.inventory = ['createCurb'];
 
   this.getPos = () => this.nodes[this.nodes.length - 1];
 
@@ -189,40 +227,13 @@ function Snake(color, p) {
   };
 
   this.checkCollision = () => {
-    const secA = [
+    const head = [
       this.nodes[this.nodes.length - 1],
       this.nodes[this.nodes.length - 2]];
 
-    return snakes.reduce((hit, snake) => {
-      return hit || snake.nodes.reduce((secHit, node, index) => {
-        if (secHit) return true;
-        if (index === 0) return false;
-
-        const secB = [node, snake.nodes[index - 1]];
-        const thisIsLastSection = snake.nodes.length - 1 === index;
-        const collision = this.detectSectionCollission(secA[0], secA[1], secB[0], secB[1]);
-
-        if (collision) {
-          if (thisIsLastSection) {
-            const hitpoint = this.calcHit(secA[0], secA[1], secB[0], secB[1]);
-            return P5.Vector.sub(hitpoint, secA[0]).mag() < P5.Vector.sub(hitpoint, secB[0]).mag();
-          }
-          return true;
-        }
-        return false;
-      }, false);
-    }, false);
-  };
-
-  this.detectSectionCollission = (n1, n2, tn1, tn2) => {
-    if (n1 === tn1 || n1 === tn2 || n2 === tn1 || n2 === tn2) return false;
-
-    return detectCollision(n1.x, n1.y, n2.x, n2.y, tn1.x, tn1.y, tn2.x, tn2.y);
-  };
-
-  this.calcHit = (n1, n2, tn1, tn2) => {
-    const hit = detectCollision(n1.x, n1.y, n2.x, n2.y, tn1.x, tn1.y, tn2.x, tn2.y, true);
-    return p.createVector(hit.x, hit.y);
+    return snakes.reduce((hit, snake) => hit
+      || detectSnakesCollision(snake.nodes, head), false)
+      || detectSpecialsCollision(head);
   };
 
   this.checkEdges = () => {
@@ -233,16 +244,12 @@ function Snake(color, p) {
       || pos.y > p.height - padding;
   };
 
-  this.render = () => {
-    p.stroke(this.color);
-    p.strokeWeight(3);
-    this.nodes.forEach((section, index) => {
-      if (index > 0) {
-        const prev = this.nodes[index - 1];
-        p.line(prev.x, prev.y, section.x, section.y);
-      }
-    });
+  this.triggerSpecial = () => {
+    const special = this.inventory.shift();
+    if (special) specialFns[special](this, p);
   };
+
+  this.render = () => renderNodes(p, this.color, this.nodes);
 
   this.renderDeco = () => {
     p.push();
@@ -251,4 +258,49 @@ function Snake(color, p) {
     p.ellipse(this.nodes[0].x, this.nodes[0].y, this.nodes[this.nodes.length - 1].x);
     p.pop();
   };
+}
+
+function detectSectionCollission(n1, n2, tn1, tn2) {
+  if (n1 === tn1 || n1 === tn2 || n2 === tn1 || n2 === tn2) return false;
+  return detectCollision(n1.x, n1.y, n2.x, n2.y, tn1.x, tn1.y, tn2.x, tn2.y);
+}
+
+function calcHit(n1, n2, tn1, tn2) {
+  const hit = detectCollision(n1.x, n1.y, n2.x, n2.y, tn1.x, tn1.y, tn2.x, tn2.y, true);
+  return p5instance.createVector(hit.x, hit.y);
+}
+
+function detectSnakesCollision(nodes, head) {
+  return nodes.reduce((hit, node, index) => {
+    if (hit) return true;
+    if (index === 0) return false;
+
+    const secB = [node, nodes[index - 1]];
+    const thisIsLastSection = nodes.length - 1 === index;
+    const collision = detectSectionCollission(head[0], head[1], secB[0], secB[1]);
+
+    if (collision) {
+      if (thisIsLastSection) {
+        const hitpoint = calcHit(head[0], head[1], secB[0], secB[1]);
+        return P5.Vector.sub(hitpoint, head[0]).mag() < P5.Vector.sub(hitpoint, secB[0]).mag();
+      }
+      return true;
+    }
+    return false;
+  }, false);
+}
+
+function detectSpecialsCollision(head) {
+  return specials.reduce((hit2, special) => hit2 || special.doesCollide(head), false);
+}
+
+function renderNodes(p, color, nodes) {
+  p.stroke(color);
+  p.strokeWeight(3);
+  nodes.forEach((section, index) => {
+    if (index > 0) {
+      const prev = nodes[index - 1];
+      p.line(prev.x, prev.y, section.x, section.y);
+    }
+  });
 }

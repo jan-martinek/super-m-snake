@@ -4,21 +4,23 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "p5": "^0.6.1",
-    "watchify": "^3.11.0"
+    "p5": "^0.6.1"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
     "babel-preset-env": "^1.7.0",
     "babel-preset-es2015": "^6.24.1",
-    "babelify": "^8.0.0"
+    "babelify": "^8.0.0",
+    "onchange": "^4.0.0",
+    "watchify": "^3.11.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "wipe": "rm -rf docs",
     "js:build": "browserify src/app.js -t babelify --outfile docs/bundle.js -t [ babelify --presets [ es2015 ] ]",
     "static": "cp src/index.html docs/index.html",
-    "build": "npm run wipe && npm run js:build && npm run static"
+    "build": "npm run wipe && npm run js:build && npm run static",
+    "watch": "onchange 'src/**' -- npm run build"
   },
   "author": "",
   "license": "ISC"
