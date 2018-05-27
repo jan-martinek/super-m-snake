@@ -1,0 +1,14 @@
+extends: airbnb-base
+env:
+  browser: true
+plugins:
+  - import
+rules:
+  no-param-reassign: off
+  no-nested-ternary: off
+  no-use-before-define: off
+  no-plusplus: off
+  max-len:
+    - error
+    - code: 100
+      ignoreRegExpLiterals: true

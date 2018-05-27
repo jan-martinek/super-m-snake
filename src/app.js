@@ -1,6 +1,5 @@
-const p5 = require("p5");
-const p5dom = require("p5/lib/addons/p5.dom");
-const detectCollision = require("./detectCollision");
+const P5 = require('p5');
+const detectCollision = require('./detectCollision');
 
 const spawnPadding = 100;
 const padding = 20;
@@ -16,7 +15,7 @@ const initial = {
   },
   {
     name: 'Petra',
-    active: false,
+    active: true,
     color: 'purple',
     controls: {
       left: 81, // Q
@@ -43,23 +42,21 @@ const initial = {
   }]
 }
 
+const hits = [];
+const menu = {};
 let mode = 'menu';
 let snakes = [];
-let specials = [];
-let hits = [];
 let setup;
-let menu = {};
 
 
-const sketch = function(p) {
-
-  p.setup = function() {
+function sketch(p) {
+  p.setup = () => {
     p.createCanvas(window.innerWidth, window.innerHeight);
     setup = initial;
     setupMenu(p);
   }
 
-  p.draw = function() {
+  p.draw = () => {
     p.background(50);
     if (mode === 'game') {
       p.stroke(255);
@@ -88,7 +85,7 @@ function updateName(id) {
 }
 
 function updateActive(id) {
-  return function() { setup.players[id].active = this.checked(); console.log(setup); }
+  return function() { setup.players[id].active = this.checked(); }
 }
 
 function setupMenu(p) {
@@ -96,8 +93,8 @@ function setupMenu(p) {
 
   setup.players.forEach((player, index) => {
     const div = p.createDiv('');
-    div.id('player' + index);
-    div.position(100, index * 100 + 100);
+    div.id(`player${index}`);
+    div.position(100, (index * 100) + 100);
 
     const inp = p.createInput(player.name);
     inp.attribute('style', `color: ${player.color}; border-color: ${player.color}`);
@@ -112,7 +109,7 @@ function setupMenu(p) {
   });
 
   const div = p.createDiv('');
-  div.position(100, setup.players.length * 100 + 100);
+  div.position(100, (setup.players.length * 100) + 100);
 
   const button = p.createButton('PLAY');
   button.mousePressed(play(p));
@@ -121,10 +118,10 @@ function setupMenu(p) {
 }
 
 function play(p) {
-  return function() {
+  return () => {
     hideMenu();
     startGame(p);
-  }
+  };
 }
 
 const showMenu = () => menu.items.forEach(item => item.show());
@@ -140,7 +137,7 @@ function pollGameControls(p) {
   if (p.keyIsDown(32)) startGame(p);
 }
 
-const game = new p5(sketch);
+const game = new P5(sketch);
 
 function startGame(p) {
   snakes = initial.players
@@ -151,39 +148,45 @@ function startGame(p) {
   mode = 'game';
 }
 
-const Snake = function(color, p) {
-  this.dir = p5.Vector.fromAngle(p.random(0, p.TAU)).setMag(2);
-  this.steered = true;
-  this.nodes = [p.createVector(
+function getRandomBoardPixel(p) {
+  return p.createVector(
     p.random(0 + spawnPadding, p.width - spawnPadding),
-    p.random(0 + spawnPadding, p.height - spawnPadding)
-  )];
+    p.random(0 + spawnPadding, p.height - spawnPadding),
+  );
+}
+
+function Snake(color, p) {
+  this.dir = P5.Vector.fromAngle(p.random(0, p.TAU)).setMag(2);
+  this.steered = true;
+  this.nodes = [getRandomBoardPixel(p)];
   this.color = color;
   this.hit = false;
 
   this.getPos = () => this.nodes[this.nodes.length - 1];
 
-  this.move = () => this.hit
+  this.move = () => (this.hit
     ? null
     : this.steered
-    ? this.addPos()
-    : this.movePos();
+      ? this.addPos()
+      : this.movePos());
 
-  this.movePos = () => this.nodes[this.nodes.length - 1] = p5.Vector.add(this.getPos(), this.dir);
+  this.movePos = () => {
+    this.nodes[this.nodes.length - 1] = P5.Vector.add(this.getPos(), this.dir);
+  };
 
   this.addPos = () => {
-    this.nodes.push(p5.Vector.add(this.getPos(), this.dir));
+    this.nodes.push(P5.Vector.add(this.getPos(), this.dir));
     this.steered = false;
-  }
+  };
 
   this.steer = (dir) => {
-    this.dir.rotate(dir * p.PI/50);
+    this.dir.rotate((dir * p.PI) / 50);
     this.steered = true;
-  }
+  };
 
   this.checkHit = () => {
     this.hit = this.hit || this.checkCollision() || this.checkEdges();
-  }
+  };
 
   this.checkCollision = () => {
     const secA = [
@@ -202,13 +205,11 @@ const Snake = function(color, p) {
         if (collision) {
           if (thisIsLastSection) {
             const hitpoint = this.calcHit(secA[0], secA[1], secB[0], secB[1]);
-            if (p5.Vector.sub(hitpoint, secA[0]).mag() < p5.Vector.sub(hitpoint, secB[0]).mag()) {
-              return true;
-            } else {
-              return false;
-            }
-          } else return true;
+            return P5.Vector.sub(hitpoint, secA[0]).mag() < P5.Vector.sub(hitpoint, secB[0]).mag();
+          }
+          return true;
         }
+        return false;
       }, false);
     }, false);
   };
@@ -216,20 +217,20 @@ const Snake = function(color, p) {
   this.detectSectionCollission = (n1, n2, tn1, tn2) => {
     if (n1 === tn1 || n1 === tn2 || n2 === tn1 || n2 === tn2) return false;
 
-    return detectCollision(
-      n1.x, n1.y, n2.x, n2.y, tn1.x, tn1.y, tn2.x, tn2.y);
+    return detectCollision(n1.x, n1.y, n2.x, n2.y, tn1.x, tn1.y, tn2.x, tn2.y);
   };
 
   this.calcHit = (n1, n2, tn1, tn2) => {
-    const hit = detectCollision(
-      n1.x, n1.y, n2.x, n2.y, tn1.x, tn1.y, tn2.x, tn2.y,
-      true);
+    const hit = detectCollision(n1.x, n1.y, n2.x, n2.y, tn1.x, tn1.y, tn2.x, tn2.y, true);
     return p.createVector(hit.x, hit.y);
   };
 
   this.checkEdges = () => {
     const pos = this.nodes[this.nodes.length - 1];
-    return pos.x < padding || pos.x > p.width - padding || pos.y < padding || pos.y > p.height - padding;
+    return pos.x < padding
+      || pos.x > p.width - padding
+      || pos.y < padding
+      || pos.y > p.height - padding;
   };
 
   this.render = () => {
@@ -239,15 +240,15 @@ const Snake = function(color, p) {
       if (index > 0) {
         const prev = this.nodes[index - 1];
         p.line(prev.x, prev.y, section.x, section.y);
-     }
+      }
     });
-  }
+  };
 
   this.renderDeco = () => {
     p.push();
     p.noStroke();
     p.fill(0, 0, 0, 50);
-    p.ellipse(this.nodes[0].x, this.nodes[0].y, this.nodes[this.nodes.length-1].x)
+    p.ellipse(this.nodes[0].x, this.nodes[0].y, this.nodes[this.nodes.length - 1].x);
     p.pop();
-  }
+  };
 }
