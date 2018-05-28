@@ -18,7 +18,7 @@ const initial = {
   {
     name: 'Petra',
     active: true,
-    color: '#3040f3',
+    color: '#30f340',
     controls: {
       left: 81, // Q
       right: 69, // E
@@ -102,9 +102,13 @@ function play() {
   game.start();
 }
 
-const showMenu = () => menu.items.forEach(item => item.style.display = 'block');
+const showMenu = () => menu.items.forEach((item) => {
+  item.style.display = 'block';
+});
 
-const hideMenu = () => menu.items.forEach(item => item.style.display = 'none');
+const hideMenu = () => menu.items.forEach((item) => {
+  item.style.display = 'none';
+});
 
 module.exports = {
   play,

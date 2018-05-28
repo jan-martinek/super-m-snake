@@ -5,13 +5,16 @@ const { renderNodes } = require('./renderer.js');
 
 const padding = 20;
 const menuPadding = 20;
-const spawnPadding = 100;
+const spawnPadding = (window.innerWidth + window.innerHeight) * 0.1;
 const players = [];
 let mode = 'menu';
+let gameOver = false;
+let winner;
 let p5instance;
 let snakes = [];
 const hits = [];
-
+let hitShake = 0;
+let hitDir;
 
 function sketch(p) {
   p5instance = p;
@@ -22,6 +25,14 @@ function sketch(p) {
 
   p.draw = () => {
     p.background(50);
+
+    if (hitShake > 0) {
+      const mag = Math.sin(p.PI * hitShake) * 10;
+      hitDir.setMag(mag);
+      p.translate(hitDir.x, hitDir.y);
+      hitShake -= 0.125;
+    }
+
     if (mode === 'game') {
       p.stroke(255);
       p.noFill();
@@ -34,6 +45,7 @@ function sketch(p) {
       snakes.forEach(snake => snake.renderBody());
       specials.deployed.forEach(special => special.render());
       snakes.forEach(snake => snake.renderHit());
+      renderScore();
 
       p.fill(255);
       hits.forEach(hit => p.ellipse(hit.x, hit.y, 100));
@@ -43,11 +55,41 @@ function sketch(p) {
     } else if (mode === 'pause') {
 
     }
+    if (gameOver) {
+      p.background(50, 80);
+      p.textSize(70);
+      p.fill(winner.color);
+      p.stroke('black');
+      p.strokeWeight(2);
+      p.textAlign(p.CENTER);
+      p.text(`${winner.name} wins!`, 0, window.innerHeight / 2 - 30, window.innerWidth, 100);
+
+      p.fill('white');
+      p.textSize(20);
+      p.text(`press SPACE to continue!`, 0, window.innerHeight / 2 + 60, window.innerWidth, 100);
+    }
+  };
+
+  p.keyReleased = () => {
+    if (p.keyCode === 32) {
+      start();
+    }
   };
 }
 
+function renderScore() {
+  const p = p5instance;
+  players.forEach((player, index) => {
+    p.textSize(20);
+    p.fill(player.color);
+    p.noStroke();
+    p.textAlign(p.LEFT);
+    p.text(`${player.name}: ${player.score}`, 20 + index * 150, 28);
+  });
+}
+
 function setupPlayers(conf) {
-  conf.forEach(player => players.push(player));
+  conf.forEach(player => players.push(Object.assign({}, player, { score: 0 })));
 }
 
 function pollGameControls() {
@@ -57,19 +99,17 @@ function pollGameControls() {
     if (p5instance.keyIsDown(players[index].controls.right)) snake.steer(1);
     if (p5instance.keyIsDown(players[index].controls.special)) snake.triggerSpecial();
   });
-
-  if (p5instance.keyIsDown(32)) start();
 }
 
 function start() {
   snakes = players
     .filter(player => player.active)
-    .map(player => player.color)
-    .map(color => new Snake(color));
+    .map(player => new Snake(player));
 
   specials.deployed.length = 0;
 
   mode = 'game';
+  gameOver = false;
 }
 
 function getRandomBoardPixel() {
@@ -88,11 +128,12 @@ function updateActive(id, status) {
 }
 
 
-function Snake(color) {
+function Snake(player) {
+  this.owner = player;
   this.dir = P5.Vector.fromAngle(p5instance.random(0, p5instance.TAU)).setMag(2);
   this.steered = true;
   this.nodes = [getRandomBoardPixel(p5instance)];
-  this.color = color;
+  this.color = this.owner.color;
   this.hit = false;
   this.inventory = ['createCurb'];
 
@@ -119,7 +160,23 @@ function Snake(color) {
   };
 
   this.checkHit = () => {
-    this.hit = this.hit || this.checkCollision() || this.checkEdges();
+    if (!this.hit) {
+      if (this.checkCollision() || this.checkEdges()) {
+        hitShake = 1;
+        hitDir = this.dir.copy();
+        this.hit = true;
+        this.calcOverScore();
+      }
+    }
+  };
+
+  this.calcOverScore = () => {
+    const leftAlive = snakes.filter(snake => !snake.hit).length;
+    if (leftAlive === 1) {
+      winner = snakes.filter(snake => !snake.hit)[0].owner;
+      winner.score += 10;
+      gameOver = true;
+    }
   };
 
   this.checkCollision = () => {
