@@ -32,9 +32,8 @@ function sketch(p) {
       snakes.forEach(snake => snake.move());
       snakes.forEach(snake => snake.checkHit());
       snakes.forEach(snake => snake.renderBody());
-      snakes.forEach(snake => snake.renderHit());
-
       specials.deployed.forEach(special => special.render());
+      snakes.forEach(snake => snake.renderHit());
 
       p.fill(255);
       hits.forEach(hit => p.ellipse(hit.x, hit.y, 100));
