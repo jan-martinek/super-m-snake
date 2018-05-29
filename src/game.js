@@ -102,17 +102,50 @@ function renderShake(p) {
 
 function renderScore() {
   const p = p5instance;
+
+  p.push();
+  p.translate(20, 10);
+
   players.filter(player => player.active).forEach((player, index) => {
-    p.textSize(20);
+    p.stroke(player.color);
+    renderIcons(p, snakes[index].inventory);
+
     p.fill(player.color);
     p.noStroke();
+    p.textSize(20);
     p.textAlign(p.LEFT);
-    p.text(`${player.name}: ${player.score}`, 20 + (index * 150), 28);
+    p.text(`${player.name}: ${player.score}`, 0, 17);
+
+    p.translate(150, 0);
   });
+
+  p.pop();
 }
 
-function setupPlayers(conf) {
-  conf.forEach(player => players.push(Object.assign({}, player, { score: 0 })));
+function renderIcons(p, inventory) {
+  p.noFill();
+
+  inventory.forEach((special) => {
+    renderSpecialIcon(p, special);
+    p.translate(30, 0);
+  });
+
+  return inventory.length * 30;
+}
+
+function renderSpecialIcon(p, special) {
+  p.push();
+  p.strokeWeight(2);
+  specials[`render${special}Icon`](p);
+
+  p.ellipseMode(p.CORNER);
+  p.ellipse(0, 0, 20, 20);
+  p.pop();
+}
+
+function setupPlayers(config) {
+  const conf = persist.loadPlayers() || config.players;
+  conf.forEach(player => players.push(Object.assign({}, { score: 0 }, player)));
 }
 
 function pollGameControls() {
@@ -157,7 +190,7 @@ function Snake(player) {
   this.nodes = [getRandomBoardPixel(p5instance)];
   this.color = this.owner.color;
   this.hit = false;
-  this.inventory = ['createCurb', 'createShuriken'];
+  this.inventory = ['Beam', 'Shuriken', 'Curb'];
 
   this.getPos = () => this.nodes[this.nodes.length - 1];
 
@@ -236,7 +269,7 @@ function Snake(player) {
 
   this.triggerSpecial = () => {
     const special = this.inventory.shift();
-    if (special) specials[special](this, p5instance);
+    if (special) specials[`create${special}`](this, p5instance);
   };
 
   this.renderBody = () => renderNodes(p5instance, this.color, this.nodes);

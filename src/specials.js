@@ -42,6 +42,31 @@ function createCurb(snake, p) {
   deployed.push(new Special(p, snake, parts));
 }
 
+function renderCurbIcon(p) {
+  p.line(0, 10, 7, 10);
+  p.line(13, 10, 20, 10);
+}
+
+function createBeam(snake, p) {
+  const dir = snake.dir.copy();
+  const pos = snake.getPos().copy();
+
+  const parts = [[
+    P5.Vector.add(pos, dir.setMag(10)),
+    P5.Vector.add(pos, dir.setMag(300)),
+  ]];
+
+  const updateFn = (special) => {
+    special.parts[0] = special.parts[0].map(node => P5.Vector.add(node, special.params.dir));
+  };
+
+  deployed.push(new Special(p, snake, parts, updateFn, { dir: dir.setMag(8) }));
+}
+
+function renderBeamIcon(p) {
+  p.line(10, 0, 10, 20);
+}
+
 function createShuriken(snake, p) {
   const r = 10;
   const spikes = 10;
@@ -61,11 +86,25 @@ function createShuriken(snake, p) {
     special.parts[0] = special.parts[0].map(node => P5.Vector.add(node, special.params.dir));
   };
 
-  deployed.push(new Special(p, snake, parts, updateFn, { dir: dir.setMag(2) }));
+  deployed.push(new Special(p, snake, parts, updateFn, { dir: dir.setMag(3) }));
+}
+
+function renderShurikenIcon(p) {
+  p.push();
+  p.translate(10, 10);
+  for (let i = 0; i < 3; i++) {
+    p.line(-7, 0, 7, 0);
+    p.rotate(p.TWO_PI / 3);
+  }
+  p.pop();
 }
 
 module.exports = {
   deployed,
+  createBeam,
+  renderBeamIcon,
   createCurb,
+  renderCurbIcon,
   createShuriken,
+  renderShurikenIcon,
 };
