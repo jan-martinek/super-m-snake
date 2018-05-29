@@ -1,7 +1,8 @@
 const P5 = require('p5');
-const specials = require('./specials.js');
+const specials = require('./specials');
+const persist = require('./persist');
 const { detectSnakeCollision } = require('./collisions');
-const { renderNodes } = require('./renderer.js');
+const { renderNodes } = require('./renderer');
 
 const padding = 20;
 const menuPadding = 20;
@@ -25,7 +26,7 @@ function sketch(p) {
   };
 
   p.draw = () => {
-    p.background(50);
+    p.clear();
 
     renderShake(p);
 
@@ -65,17 +66,17 @@ function sketch(p) {
 }
 
 function renderGameOver(p) {
-  p.background(50, 90);
+  p.background(0, 170);
   p.textSize(70);
   p.fill(winner.color);
   p.stroke('black');
   p.strokeWeight(2);
   p.textAlign(p.CENTER);
-  p.text(`${winner.name} wins!`, 0, window.innerHeight * 0.4 - 30, window.innerWidth, 100);
+  p.text(`${winner.name} wins!`, 0, (window.innerHeight * 0.4) - 30, window.innerWidth, 100);
 
   p.fill('white');
   p.textSize(20);
-  p.text('press SPACE to continue', 0, window.innerHeight * 0.4 + 60, window.innerWidth, 100);
+  p.text('press SPACE to continue', 0, (window.innerHeight * 0.4) + 60, window.innerWidth, 100);
 }
 
 function renderFrame(p) {
@@ -176,10 +177,12 @@ function getRandomBoardPixel() {
 
 function updateName(id, name) {
   players[id].name = name;
+  persist.savePlayers(players);
 }
 
 function updateActive(id, status) {
   players[id].active = status;
+  persist.savePlayers(players);
 }
 
 
@@ -227,6 +230,8 @@ function Snake(player) {
 
   this.addScore = (points) => {
     this.owner.score += points;
+    persist.savePlayers(players);
+
     scoreAnimations.push({
       frame: 0,
       pos: this.getPos().copy(),
@@ -246,8 +251,9 @@ function Snake(player) {
   };
 
   this.getHead = () => {
-    const tip = this.nodes[this.nodes.length - 1];
-    const neck = P5.Vector.sub(tip, this.dir.copy().setMag(1.9));
+    const frontNode = this.nodes[this.nodes.length - 1].copy();
+    const tip = P5.Vector.sub(frontNode, this.dir.copy().setMag(-0.5));
+    const neck = P5.Vector.sub(frontNode, this.dir.copy().setMag(1.9));
     return [tip, neck];
   };
 
@@ -319,7 +325,8 @@ function renderScoreAnimations(p) {
 }
 
 function detectSpecialCollision(snake, head) {
-  return specials.deployed.reduce((hit2, special) => hit2 || special.doesCollide(snake, head), false);
+  return specials.deployed.reduce((hit2, special) => hit2 ||
+    special.doesCollide(snake, head), false);
 }
 
 module.exports = {

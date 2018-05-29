@@ -18,7 +18,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "wipe": "rm -rf docs",
     "js:build": "browserify src/app.js -t babelify --outfile docs/bundle.js -t [ babelify --presets [ es2015 ] ]",
-    "static": "cp src/index.html docs/index.html",
+    "static": "cp src/index.html docs/index.html && cp src/bg.jpg docs/bg.jpg",
     "build": "npm run wipe && npm run js:build && npm run static",
     "watch": "onchange 'src/**' -- npm run build"
   },
