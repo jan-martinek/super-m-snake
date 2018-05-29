@@ -135,7 +135,7 @@ function Snake(player) {
   this.nodes = [getRandomBoardPixel(p5instance)];
   this.color = this.owner.color;
   this.hit = false;
-  this.inventory = ['createCurb'];
+  this.inventory = ['createCurb', 'createShuriken'];
 
   this.getPos = () => this.nodes[this.nodes.length - 1];
 
