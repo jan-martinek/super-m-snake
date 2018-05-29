@@ -1,58 +1,17 @@
 const P5 = require('p5');
-
+const config = require('./config.js');
 const game = require('./game.js');
 
 const menu = {};
 
-const initial = {
-  players: [{
-    name: 'Martin',
-    active: true,
-    color: '#30f3e3',
-    controls: {
-      left: 37, // <--
-      right: 39, // -->,
-      special: 38, // ^
-    },
-  },
-  {
-    name: 'Petra',
-    active: true,
-    color: '#30f340',
-    controls: {
-      left: 81, // Q
-      right: 69, // E
-      special: 87, // W,
-    },
-  },
-  {
-    name: 'Pavla',
-    active: false,
-    color: '#f33040',
-    controls: {
-      left: 73, // I
-      right: 80, // P,
-      special: 79, // O
-    },
-  },
-  {
-    name: 'Honya',
-    active: false,
-    color: '#f3e330',
-    controls: {
-      left: 86, // V
-      right: 78, // N
-      special: 66, // B,
-    },
-  }],
-};
+
+function init() {
+  game.setupPlayers(config);
+  setupMenu();
+  new P5(game.sketch);
+}
 
 function setupMenu() {
-  game.setupPlayers(initial.players);
-
-  new P5(game.sketch);
-  const p = game.p5instance;
-
   menu.items = [];
 
   game.players.forEach((player, index) => {
@@ -62,19 +21,27 @@ function setupMenu() {
     div.style.left = '100px';
     div.style.top = `${(index * 100) + 100}px`;
 
-    const inp = document.createElement('INPUT');
-    inp.style.color = player.color;
-    inp.style.borderColor = player.color;
-    inp.value = player.name;
-    inp.addEventListener('input', () => game.updateName(index, inp.value));
-    div.appendChild(inp);
-
     const checkbox = document.createElement('INPUT');
     checkbox.setAttribute('id', `p${index}`);
     checkbox.setAttribute('type', 'checkbox');
     checkbox.checked = player.active;
     checkbox.addEventListener('change', () => game.updateActive(index, checkbox.checked));
     div.appendChild(checkbox);
+
+    const inp = document.createElement('INPUT');
+    inp.style.color = player.color;
+    inp.style.borderColor = player.color;
+    inp.setAttribute('size', 8);
+    inp.setAttribute('maxlength', 8);
+    inp.value = player.name;
+    inp.addEventListener('input', () => game.updateName(index, inp.value));
+    div.appendChild(inp);
+
+    const span = document.createElement('SPAN');
+    span.classList.add('score');
+    span.innerHTML = player.score;
+    span.style.color = player.color;
+    div.appendChild(span);
 
     const label = document.createElement('LABEL');
     label.setAttribute('for', `p${index}`);
@@ -112,6 +79,6 @@ const hideMenu = () => menu.items.forEach((item) => {
 
 module.exports = {
   play,
-  setupMenu,
+  init,
   showMenu,
 };
