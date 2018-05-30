@@ -183,8 +183,12 @@ function sketch(p) {
     }
 
     if (!gameOver) {
-      players.forEach(function (player, index) {
-        if (p.keyCode === player.controls.special) snakes[index].triggerSpecial();
+      players.forEach(function (player) {
+        if (p.keyCode === player.controls.special) {
+          snakes.filter(function (snake) {
+            return snake.owner === player;
+          })[0].triggerSpecial();
+        }
       });
     }
   };
@@ -279,8 +283,8 @@ function setupPlayers(config) {
 function pollGameControls() {
   snakes.forEach(function (snake, index) {
     if (snake.hit) return;
-    if (p5instance.keyIsDown(players[index].controls.left)) snake.steer(-1);
-    if (p5instance.keyIsDown(players[index].controls.right)) snake.steer(1);
+    if (p5instance.keyIsDown(snake.owner.controls.left)) snake.steer(-1);
+    if (p5instance.keyIsDown(snake.owner.controls.right)) snake.steer(1);
   });
 }
 
