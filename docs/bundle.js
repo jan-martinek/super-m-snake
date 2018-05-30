@@ -516,8 +516,8 @@ function setupMenu() {
     var div = document.createElement('DIV');
     div.setAttribute('id', 'player' + index);
     div.style.position = 'absolute';
-    div.style.left = '100px';
-    div.style.top = index * 100 + 100 + 'px';
+    div.style.left = '9vw';
+    div.style.top = index * 9 + 9 + 'vw';
 
     var checkbox = document.createElement('INPUT');
     checkbox.setAttribute('id', 'p' + index);
@@ -559,8 +559,8 @@ function setupMenu() {
 
   var div = document.createElement('DIV');
   div.style.position = 'absolute';
-  div.style.left = '100px';
-  div.style.top = game.players.length * 100 + 100 + 'px';
+  div.style.left = '9vw';
+  div.style.top = game.players.length * 9 + 11 + 'vw';
 
   var button = document.createElement('BUTTON');
   button.innerHTML = 'PLAY';
