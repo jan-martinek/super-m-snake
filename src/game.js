@@ -1,4 +1,4 @@
-const P5 = require('p5');
+const P5 = require('./p5-dev/p5.min');
 const specials = require('./specials');
 const persist = require('./persist');
 const { detectSnakeCollision } = require('./collisions');
@@ -11,6 +11,7 @@ const players = [];
 let mode = 'menu';
 let gameOver = false;
 let winner;
+let winnerMessage;
 let p5instance;
 let snakes = [];
 const hits = [];
@@ -76,7 +77,17 @@ function renderGameOver(p) {
 
   p.fill('white');
   p.textSize(20);
-  p.text('press SPACE to continue', 0, (window.innerHeight * 0.4) + 60, window.innerWidth, 100);
+  p.textStyle(p.ITALIC);
+  p.text(
+    winnerMessage,
+    0,
+    (window.innerHeight * 0.4) + 60,
+    window.innerWidth,
+    120,
+  );
+
+  p.textStyle(p.NORMAL);
+  p.text('press SPACE to continue', 0, (window.innerHeight) - 60, window.innerWidth, 100);
 }
 
 function renderFrame(p) {
@@ -246,6 +257,7 @@ function Snake(player) {
       const winningSnake = snakes.filter(snake => !snake.hit)[0];
       winningSnake.addScore(10);
       winner = snakes.filter(snake => !snake.hit)[0].owner;
+      winnerMessage = martin.getMessage(winner.name, players);
       gameOver = true;
     }
   };

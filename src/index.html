@@ -18,14 +18,32 @@
         border-width: 0 0 5px 0;
 
         font-family: Helvetica, Arial, no-serif;
-        font-size: 48px;
+        font-size: 6vw;
       }
-      span {
+      .score {
         border: none;
-        width: 100px;
+        width: 12vw;
         display: inline-block;
         text-align: right;
-        margin-right: 20px;
+        margin-right: 3vw;
+      }
+      .controls {
+        width: auto;
+        padding: 1.5vw;
+        position: relative;
+        top: -1.5vw;
+        right: 1vw;
+      }
+      .controls b {
+        display: inline-block;
+        font-size: 2vw;
+        padding: 0.3rem 0.5em;
+        min-width: 1.2rem;
+        border: 2px solid #777;
+        border-radius: 3px;
+        font-family: Helvetica, Arial, no-serif;
+        font-weight: normal;
+        color: #777;
       }
       button {
         background-color: white;
@@ -43,12 +61,14 @@
       }
 
       input[type=checkbox] ~ span,
+      input[type=checkbox] ~ div,
       input[type=checkbox] ~ input,
       input[type=checkbox] ~ label::before {
         opacity: 0.3;
       }
 
       input[type=checkbox]:checked ~ span,
+      input[type=checkbox]:checked ~ div,
       input[type=checkbox]:checked ~ input,
       input[type=checkbox]:checked ~ label::before {
         opacity: 1;
@@ -56,9 +76,9 @@
 
       body > div > div,
       label {
-        font-size: 48px;
+        font-size: 6vw;
         display: inline-block;
-        width: 48px;
+        width: 6vw;
         text-align: center;
         color: white;
         cursor: pointer;

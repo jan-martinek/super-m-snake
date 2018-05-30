@@ -1,4 +1,4 @@
-const P5 = require('p5');
+const P5 = require('./p5-dev/p5.min');
 const { renderNodes } = require('./renderer.js');
 const { detectSnakeCollision } = require('./collisions');
 
