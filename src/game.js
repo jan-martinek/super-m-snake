@@ -1,6 +1,7 @@
 const P5 = require('./p5-dev/p5.min');
 const specials = require('./specials');
 const persist = require('./persist');
+const martin = require('./martin');
 const { detectSnakeCollision } = require('./collisions');
 const { renderNodes } = require('./renderer');
 
