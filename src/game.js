@@ -60,8 +60,10 @@ function sketch(p) {
     }
 
     if (!gameOver) {
-      players.forEach((player, index) => {
-        if (p.keyCode === player.controls.special) snakes[index].triggerSpecial();
+      players.forEach((player) => {
+        if (p.keyCode === player.controls.special) {
+          snakes.filter(snake => snake.owner === player)[0].triggerSpecial();
+        }
       });
     }
   };
@@ -164,8 +166,8 @@ function setupPlayers(config) {
 function pollGameControls() {
   snakes.forEach((snake, index) => {
     if (snake.hit) return;
-    if (p5instance.keyIsDown(players[index].controls.left)) snake.steer(-1);
-    if (p5instance.keyIsDown(players[index].controls.right)) snake.steer(1);
+    if (p5instance.keyIsDown(snake.owner.controls.left)) snake.steer(-1);
+    if (p5instance.keyIsDown(snake.owner.controls.right)) snake.steer(1);
   });
 }
 
