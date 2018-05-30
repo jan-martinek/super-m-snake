@@ -319,15 +319,19 @@ function Snake(player) {
   var _this = this;
 
   this.owner = player;
-  this.dir = P5.Vector.fromAngle(p5instance.random(0, p5instance.TAU)).setMag(2);
   this.steered = true;
   this.nodes = [getRandomBoardPixel(p5instance)];
   this.color = this.owner.color;
   this.hit = false;
   this.inventory = ['Beam', 'Shuriken', 'Curb'];
+  var dir = P5.Vector.fromAngle(p5instance.random(0, p5instance.TAU)).setMag(2);
 
   this.getPos = function () {
-    return _this.nodes[_this.nodes.length - 1];
+    return _this.nodes[_this.nodes.length - 1].copy();
+  };
+
+  this.getDir = function () {
+    return dir.copy();
   };
 
   this.move = function () {
@@ -335,16 +339,16 @@ function Snake(player) {
   };
 
   this.movePos = function () {
-    _this.nodes[_this.nodes.length - 1] = P5.Vector.add(_this.getPos(), _this.dir);
+    _this.nodes[_this.nodes.length - 1] = P5.Vector.add(_this.getPos(), dir);
   };
 
   this.addPos = function () {
-    _this.nodes.push(P5.Vector.add(_this.getPos(), _this.dir));
+    _this.nodes.push(P5.Vector.add(_this.getPos(), dir));
     _this.steered = false;
   };
 
-  this.steer = function (dir) {
-    _this.dir.rotate(dir * p5instance.PI / 50);
+  this.steer = function (amount) {
+    dir.rotate(amount * p5instance.PI / 50);
     _this.steered = true;
   };
 
@@ -352,7 +356,7 @@ function Snake(player) {
     if (!_this.hit) {
       if (_this.checkCollision() || _this.checkEdges()) {
         hitShake = 1;
-        hitDir = _this.dir.copy();
+        hitDir = _this.getDir();
         _this.hit = true;
         _this.calcOverScore();
       }
@@ -365,7 +369,7 @@ function Snake(player) {
 
     scoreAnimations.push({
       frame: 0,
-      pos: _this.getPos().copy(),
+      pos: _this.getPos(),
       color: _this.color,
       points: points
     });
@@ -390,8 +394,8 @@ function Snake(player) {
 
   this.getHead = function () {
     var frontNode = _this.nodes[_this.nodes.length - 1].copy();
-    var tip = P5.Vector.sub(frontNode, _this.dir.copy().setMag(-0.5));
-    var neck = P5.Vector.sub(frontNode, _this.dir.copy().setMag(1.9));
+    var tip = P5.Vector.add(frontNode, _this.getDir().setMag(1));
+    var neck = P5.Vector.sub(frontNode, _this.getDir().setMag(1.9));
     return [tip, neck];
   };
 
@@ -420,7 +424,7 @@ function Snake(player) {
   this.renderHit = function () {
     if (!_this.hit) return;
 
-    var center = _this.getPos().copy();
+    var center = _this.getPos();
     var vec = new P5.Vector(0, 10);
     var seed = new Date().getTime();
 
@@ -694,7 +698,7 @@ function Special(p, snake, parts, updateFn, params) {
 
 function createCurb(snake, p) {
   var pos = snake.getPos();
-  var dir = snake.dir.copy().rotate(p.HALF_PI);
+  var dir = snake.getDir().rotate(p.HALF_PI);
 
   var parts = [[P5.Vector.add(pos, dir.setMag(7)), P5.Vector.add(pos, dir.setMag(30))], [P5.Vector.add(pos, dir.setMag(-7)), P5.Vector.add(pos, dir.setMag(30))]];
 
@@ -707,8 +711,8 @@ function renderCurbIcon(p) {
 }
 
 function createBeam(snake, p) {
-  var dir = snake.dir.copy();
-  var pos = snake.getPos().copy();
+  var dir = snake.getDir();
+  var pos = snake.getPos();
 
   var parts = [[P5.Vector.add(pos, dir.setMag(10)), P5.Vector.add(pos, dir.setMag(300))]];
 
@@ -729,7 +733,7 @@ function createShuriken(snake, p) {
   var r = 10;
   var spikes = 10;
 
-  var dir = snake.dir.copy();
+  var dir = snake.getDir();
   var pos = P5.Vector.add(snake.getPos(), dir.setMag(2 * r));
 
   var parts = [[]];

@@ -32,7 +32,7 @@ function Special(p, snake, parts, updateFn, params) {
 
 function createCurb(snake, p) {
   const pos = snake.getPos();
-  const dir = snake.dir.copy().rotate(p.HALF_PI);
+  const dir = snake.getDir().rotate(p.HALF_PI);
 
   const parts = [
     [P5.Vector.add(pos, dir.setMag(7)), P5.Vector.add(pos, dir.setMag(30))],
@@ -48,8 +48,8 @@ function renderCurbIcon(p) {
 }
 
 function createBeam(snake, p) {
-  const dir = snake.dir.copy();
-  const pos = snake.getPos().copy();
+  const dir = snake.getDir();
+  const pos = snake.getPos();
 
   const parts = [[
     P5.Vector.add(pos, dir.setMag(10)),
@@ -71,7 +71,7 @@ function createShuriken(snake, p) {
   const r = 10;
   const spikes = 10;
 
-  const dir = snake.dir.copy();
+  const dir = snake.getDir();
   const pos = P5.Vector.add(snake.getPos(), dir.setMag(2 * r));
 
   const parts = [[]];

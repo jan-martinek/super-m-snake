@@ -202,14 +202,16 @@ function updateActive(id, status) {
 
 function Snake(player) {
   this.owner = player;
-  this.dir = P5.Vector.fromAngle(p5instance.random(0, p5instance.TAU)).setMag(2);
   this.steered = true;
   this.nodes = [getRandomBoardPixel(p5instance)];
   this.color = this.owner.color;
   this.hit = false;
   this.inventory = ['Beam', 'Shuriken', 'Curb'];
+  let dir = P5.Vector.fromAngle(p5instance.random(0, p5instance.TAU)).setMag(2);
 
-  this.getPos = () => this.nodes[this.nodes.length - 1];
+  this.getPos = () => this.nodes[this.nodes.length - 1].copy();
+
+  this.getDir = () => dir.copy();
 
   this.move = () => (this.hit
     ? null
@@ -218,16 +220,16 @@ function Snake(player) {
       : this.movePos());
 
   this.movePos = () => {
-    this.nodes[this.nodes.length - 1] = P5.Vector.add(this.getPos(), this.dir);
+    this.nodes[this.nodes.length - 1] = P5.Vector.add(this.getPos(), dir);
   };
 
   this.addPos = () => {
-    this.nodes.push(P5.Vector.add(this.getPos(), this.dir));
+    this.nodes.push(P5.Vector.add(this.getPos(), dir));
     this.steered = false;
   };
 
-  this.steer = (dir) => {
-    this.dir.rotate((dir * p5instance.PI) / 50);
+  this.steer = (amount) => {
+    dir.rotate((amount * p5instance.PI) / 50);
     this.steered = true;
   };
 
@@ -235,7 +237,7 @@ function Snake(player) {
     if (!this.hit) {
       if (this.checkCollision() || this.checkEdges()) {
         hitShake = 1;
-        hitDir = this.dir.copy();
+        hitDir = this.getDir();
         this.hit = true;
         this.calcOverScore();
       }
@@ -248,7 +250,7 @@ function Snake(player) {
 
     scoreAnimations.push({
       frame: 0,
-      pos: this.getPos().copy(),
+      pos: this.getPos(),
       color: this.color,
       points,
     });
@@ -267,8 +269,8 @@ function Snake(player) {
 
   this.getHead = () => {
     const frontNode = this.nodes[this.nodes.length - 1].copy();
-    const tip = P5.Vector.sub(frontNode, this.dir.copy().setMag(-0.5));
-    const neck = P5.Vector.sub(frontNode, this.dir.copy().setMag(1.9));
+    const tip = P5.Vector.add(frontNode, this.getDir().setMag(1));
+    const neck = P5.Vector.sub(frontNode, this.getDir().setMag(1.9));
     return [tip, neck];
   };
 
@@ -298,7 +300,7 @@ function Snake(player) {
   this.renderHit = () => {
     if (!this.hit) return;
 
-    const center = this.getPos().copy();
+    const center = this.getPos();
     const vec = new P5.Vector(0, 10);
     const seed = new Date().getTime();
 
