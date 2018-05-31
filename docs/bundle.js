@@ -6,58 +6,43 @@ var menu = require('./menu.js');
 document.addEventListener('DOMContentLoaded', menu.init);
 
 },{"./menu.js":6}],2:[function(require,module,exports){
-'use strict';
+"use strict";
 
-var P5 = require('./p5-dev/p5.min');
-
-function detectSnakeCollision(nodes, head) {
+function detectSnakeCollision(nodes, pos) {
   return nodes.reduce(function (hit, node, index) {
     if (hit) return true;
     if (index === 0) return false;
 
-    var secB = [node, nodes[index - 1]];
+    var s = [node, nodes[index - 1]];
     var thisIsLastSection = nodes.length - 1 === index;
-    var collision = detectSectionCollission(head[0], head[1], secB[0], secB[1]);
 
-    if (collision) {
-      if (thisIsLastSection) {
-        var hitpoint = calcHit(head[0], head[1], secB[0], secB[1]);
-        return P5.Vector.sub(hitpoint, head[0]).mag() < P5.Vector.sub(hitpoint, secB[0]).mag();
-      }
-      return true;
-    }
-    return false;
+    if (thisIsLastSection && pos.x === node.x && pos.y === node.y) return false;
+
+    return detectPointLine(pos.x, pos.y, s[0].x, s[0].y, s[1].x, s[1].y, 0.1);
   }, false);
 }
 
-function detectSectionCollission(n1, n2, tn1, tn2) {
-  if (n1 === tn1 || n1 === tn2 || n2 === tn1 || n2 === tn2) return false;
-  return detectLineLine(n1.x, n1.y, n2.x, n2.y, tn1.x, tn1.y, tn2.x, tn2.y);
-}
+function detectPointLine(px, py, x1, y1, x2, y2, buffer) {
+  var d1 = dist(px, py, x1, y1);
+  var d2 = dist(px, py, x2, y2);
 
-function calcHit(n1, n2, tn1, tn2) {
-  var hit = detectLineLine(n1.x, n1.y, n2.x, n2.y, tn1.x, tn1.y, tn2.x, tn2.y, true);
-  return new P5.Vector(hit.x, hit.y);
-}
+  var lineLen = dist(x1, y1, x2, y2);
 
-/* Adopted from https://github.com/bmoren/p5.collide2D#collidelineline */
-function detectLineLine(x1, y1, x2, y2, x3, y3, x4, y4, calcIntersection) {
-  // calculate the distance to intersection point
-  var uA = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
-  var uB = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
-
-  // if uA and uB are between 0-1, lines are colliding
-  if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1) {
-    return calcIntersection ? { x: x1 + uA * (x2 - x1), y: y1 + uA * (y2 - y1) } : true;
+  if (buffer === undefined) {
+    buffer = 0.1;
   }
-  return calcIntersection ? { x: false, y: false } : false;
+  return d1 + d2 >= lineLen - buffer && d1 + d2 <= lineLen + buffer;
+}
+
+function dist(x1, y1, x2, y2) {
+  return Math.hypot(x2 - x1, y2 - y1);
 }
 
 module.exports = {
   detectSnakeCollision: detectSnakeCollision
 };
 
-},{"./p5-dev/p5.min":7}],3:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -281,7 +266,7 @@ function setupPlayers(config) {
 }
 
 function pollGameControls() {
-  snakes.forEach(function (snake, index) {
+  snakes.forEach(function (snake) {
     if (snake.hit) return;
     if (p5instance.keyIsDown(snake.owner.controls.left)) snake.steer(-1);
     if (p5instance.keyIsDown(snake.owner.controls.right)) snake.steer(1);
@@ -392,19 +377,10 @@ function Snake(player) {
     }
   };
 
-  this.getHead = function () {
-    var frontNode = _this.nodes[_this.nodes.length - 1].copy();
-    var tip = P5.Vector.add(frontNode, _this.getDir().setMag(1));
-    var neck = P5.Vector.sub(frontNode, _this.getDir().setMag(1.9));
-    return [tip, neck];
-  };
-
   this.checkCollision = function () {
-    var head = _this.getHead();
-
     return snakes.reduce(function (hit, snake) {
-      return hit || detectSnakeCollision(snake.nodes, head);
-    }, false) || detectSpecialCollision(_this, head);
+      return hit || detectSnakeCollision(snake.nodes, _this.getPos());
+    }, false) || detectSpecialCollision(_this, _this.getPos());
   };
 
   this.checkEdges = function () {
@@ -465,9 +441,9 @@ function renderScoreAnimations(p) {
   });
 }
 
-function detectSpecialCollision(snake, head) {
+function detectSpecialCollision(snake, pos) {
   return specials.deployed.reduce(function (hit2, special) {
-    return hit2 || special.doesCollide(snake, head);
+    return hit2 || special.doesCollide(snake, pos);
   }, false);
 }
 
@@ -681,9 +657,9 @@ function Special(p, snake, parts, updateFn, params) {
     if (_this.updateFn) _this.updateFn(_this);
   };
 
-  this.doesCollide = function (otherSnake, head) {
+  this.doesCollide = function (otherSnake, pos) {
     var collision = _this.parts.reduce(function (hit, nodes) {
-      return hit || detectSnakeCollision(nodes, head);
+      return hit || detectSnakeCollision(nodes, pos);
     }, false);
 
     if (collision) {
