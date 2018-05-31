@@ -8,18 +8,17 @@ function detectSnakeCollision(nodes, pos) {
 
     if (thisIsLastSection && pos.x === node.x && pos.y === node.y) return false;
 
-    return detectPointLine(pos.x, pos.y, s[0].x, s[0].y, s[1].x, s[1].y, 0.1);
+    return detectPointLine(pos.x, pos.y, s[0].x, s[0].y, s[1].x, s[1].y);
   }, false);
 }
 
-function detectPointLine(px, py, x1, y1, x2, y2, buffer) {
+function detectPointLine(px, py, x1, y1, x2, y2) {
   const d1 = dist(px, py, x1, y1);
   const d2 = dist(px, py, x2, y2);
-
   const lineLen = dist(x1, y1, x2, y2);
 
-  if (buffer === undefined) { buffer = 0.1; }
-  return d1 + d2 >= lineLen - buffer && d1 + d2 <= lineLen + buffer;
+  const buffer = 0.03;
+  return d1 < 1.5 || d2 < 1.5 || (d1 + d2 >= lineLen - buffer && d1 + d2 <= lineLen + buffer);
 }
 
 function dist(x1, y1, x2, y2) {
