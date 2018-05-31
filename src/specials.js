@@ -16,9 +16,9 @@ function Special(p, snake, parts, updateFn, params) {
     if (this.updateFn) this.updateFn(this);
   };
 
-  this.doesCollide = (otherSnake, head) => {
+  this.doesCollide = (otherSnake, pos) => {
     const collision = this.parts.reduce((hit, nodes) =>
-      hit || detectSnakeCollision(nodes, head), false);
+      hit || detectSnakeCollision(nodes, pos), false);
 
     if (collision) {
       this.updateFn = null;

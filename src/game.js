@@ -164,7 +164,7 @@ function setupPlayers(config) {
 }
 
 function pollGameControls() {
-  snakes.forEach((snake, index) => {
+  snakes.forEach((snake) => {
     if (snake.hit) return;
     if (p5instance.keyIsDown(snake.owner.controls.left)) snake.steer(-1);
     if (p5instance.keyIsDown(snake.owner.controls.right)) snake.steer(1);
@@ -207,7 +207,7 @@ function Snake(player) {
   this.color = this.owner.color;
   this.hit = false;
   this.inventory = ['Beam', 'Shuriken', 'Curb'];
-  let dir = P5.Vector.fromAngle(p5instance.random(0, p5instance.TAU)).setMag(2);
+  const dir = P5.Vector.fromAngle(p5instance.random(0, p5instance.TAU)).setMag(2);
 
   this.getPos = () => this.nodes[this.nodes.length - 1].copy();
 
@@ -267,19 +267,10 @@ function Snake(player) {
     }
   };
 
-  this.getHead = () => {
-    const frontNode = this.nodes[this.nodes.length - 1].copy();
-    const tip = P5.Vector.add(frontNode, this.getDir().setMag(1));
-    const neck = P5.Vector.sub(frontNode, this.getDir().setMag(1.9));
-    return [tip, neck];
-  };
-
   this.checkCollision = () => {
-    const head = this.getHead();
-
     return snakes.reduce((hit, snake) => hit
-      || detectSnakeCollision(snake.nodes, head), false)
-      || detectSpecialCollision(this, head);
+      || detectSnakeCollision(snake.nodes, this.getPos()), false)
+      || detectSpecialCollision(this, this.getPos());
   };
 
   this.checkEdges = () => {
@@ -341,9 +332,9 @@ function renderScoreAnimations(p) {
   });
 }
 
-function detectSpecialCollision(snake, head) {
+function detectSpecialCollision(snake, pos) {
   return specials.deployed.reduce((hit2, special) => hit2 ||
-    special.doesCollide(snake, head), false);
+    special.doesCollide(snake, pos), false);
 }
 
 module.exports = {
