@@ -71,14 +71,18 @@ function setupMenu() {
   menu.items.push(div);
 
   menu.items.forEach(item => document.body.appendChild(item));
+
+  button.focus();
 }
 
-function play() {
+function play(e) {
+  e.target.blur();
   hideMenu();
   game.start();
 }
 
 const showMenu = () => menu.items.forEach((item) => {
+  document.querySelector('button').focus();
   item.style.display = 'block';
 });
 
