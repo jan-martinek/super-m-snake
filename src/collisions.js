@@ -17,7 +17,7 @@ function detectPointLine(px, py, x1, y1, x2, y2) {
   const d2 = dist(px, py, x2, y2);
   const lineLen = dist(x1, y1, x2, y2);
 
-  const buffer = 0.03;
+  const buffer = 0.5 / Math.sqrt(lineLen);
   return d1 < 1.5 || d2 < 1.5 || (d1 + d2 >= lineLen - buffer && d1 + d2 <= lineLen + buffer);
 }
 
